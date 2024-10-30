@@ -210,15 +210,9 @@ class LinkageChecker
   end
 
   def check_formula_deps
-    filter_out = proc do |dep|
-      next true if dep.build? || dep.test?
-
-      (dep.optional? || dep.recommended?) && formula.build.without?(dep)
-    end
-
-    declared_deps_full_names = formula.deps
-                                      .reject { |dep| filter_out.call(dep) }
-                                      .map(&:name)
+    declared_deps = formula.deps.reject { |dep| dep.build? || dep.test? || dep.prune_from_option?(formula.build) }
+    declared_deps_aliases = declared_deps.flat_map { |dep| dep.to_formula.aliases }
+    declared_deps_full_names = declared_deps.map(&:name)
     declared_deps_names = declared_deps_full_names.map do |dep|
       dep.split("/").last
     end
@@ -232,7 +226,7 @@ class LinkageChecker
       next if name == formula.name
 
       if recursive_deps.include?(name)
-        indirect_deps << full_name unless declared_deps_names.include?(name)
+        indirect_deps << full_name if declared_deps_names.exclude?(name) && declared_deps_aliases.exclude?(name)
       else
         undeclared_deps << full_name
       end
