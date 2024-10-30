@@ -362,7 +362,7 @@ module Homebrew
           end
 
           # we want to allow uses_from_macos for aliases but not bare dependencies
-          if self.class.aliases.include?(dep.name) && !dep.uses_from_macos?
+          if self.class.aliases.include?(dep.name) && !dep.uses_from_macos? && dep.name != "pkg-config"
             problem "Dependency '#{dep.name}' is an alias; use the canonical name '#{dep.to_formula.full_name}'."
           end
 
